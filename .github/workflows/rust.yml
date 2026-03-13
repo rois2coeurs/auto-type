@@ -54,18 +54,12 @@ jobs:
       run: rustup target add ${{ matrix.target }}
 
     - name: Build
-      run: cargo build --verbose --release --target ${{ matrix.target }}
+      run: cargo build --release --target ${{ matrix.target }}
       env:
         CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: ${{ matrix.target == 'aarch64-unknown-linux-gnu' && 'aarch64-linux-gnu-gcc' || '' }}
-    - name: Debug Output Directory (Windows)
-      if: runner.os == 'Windows'
-      run: dir target\${{ matrix.target }}\release\
-      
-    - name: Debug Output Directory (Linux)
-      if: runner.os == 'Linux'
-      run: ls -la target/${{ matrix.target }}/release/
+
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.artifact_name }} 
-        path: target/${{ matrix.target }}/release/auto_typer${{ matrix.exe_suffix }}
+        path: target/${{ matrix.target }}/release/auto-typer${{ matrix.exe_suffix }}
