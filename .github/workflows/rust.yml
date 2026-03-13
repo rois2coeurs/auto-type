@@ -1,4 +1,4 @@
-name: Rust
+name: Rust Multi-Platform Build
 
 on:
   push:
@@ -11,14 +11,55 @@ env:
 
 jobs:
   build:
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      fail-fast: false 
+      matrix:
+        include:
+          # Windows AMD64 (Standard 64-bit)
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: auto_typer-windows-amd64
+            exe_suffix: .exe
 
-    runs-on: ubuntu-latest
+          # Windows ARM64 (e.g., Snapdragon laptops)
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            artifact_name: auto_typer-windows-arm64
+            exe_suffix: .exe
+
+          # Linux AMD64 (Standard 64-bit)
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: auto_typer-linux-amd64
+            exe_suffix: ""
+
+          # Linux ARM64 (e.g., Raspberry Pi, AWS Graviton)
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            artifact_name: auto_typer-linux-arm64
+            exe_suffix: ""
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Install Linux ARM cross-compilation toolchain
+      if: matrix.target == 'aarch64-unknown-linux-gnu'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-aarch64-linux-gnu
+
+    - name: Add Rust Target
+      run: rustup target add ${{ matrix.target }}
+
     - name: Build
-      run: cargo build --verbose --release
+      run: cargo build --verbose --release --target ${{ matrix.target }}
+      env:
+        CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: ${{ matrix.target == 'aarch64-unknown-linux-gnu' && 'aarch64-linux-gnu-gcc' || '' }}
+
     - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v7.0.0
+      uses: actions/upload-artifact@v4
       with:
-        path: target/release/auto_typer.exe
+        name: ${{ matrix.artifact_name }} 
+        path: target/${{ matrix.target }}/release/auto_typer${{ matrix.exe_suffix }}
