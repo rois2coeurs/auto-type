@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 use autopilot::key::{Code, Flag};
 use eframe::egui;
 
